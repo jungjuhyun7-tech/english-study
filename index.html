@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jason & Emma's Real Life English</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="JE English">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; min-height: 100vh; }
+  #app { max-width: 680px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; font-weight: 600; color: #111; }
+  .subtitle { font-size: 13px; color: #888; margin-top: 4px; margin-bottom: 16px; }
+  .badge { font-size: 11px; color: #999; background: #eee; padding: 2px 8px; border-radius: 99px; margin-left: 8px; vertical-align: middle; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tab { padding: 7px 14px; font-size: 13px; border-radius: 99px; cursor: pointer; border: 1px solid #ddd; background: #fff; color: #666; display: flex; align-items: center; gap: 5px; }
+  .tab.active { font-weight: 600; border-width: 1.5px; }
+  .controls { display: flex; gap: 8px; margin-bottom: 12px; }
+  .controls input { flex: 1; padding: 8px 12px; font-size: 13px; border: 1px solid #ddd; border-radius: 8px; outline: none; background: #fff; }
+  .controls input:focus { border-color: #aaa; }
+  .fav-btn-bar { padding: 7px 14px; font-size: 13px; border-radius: 99px; cursor: pointer; border: 1px solid #ddd; background: #fff; color: #666; white-space: nowrap; }
+  .fav-btn-bar.active { background: #fff0f5; color: #d4537e; border-color: #d4537e; border-width: 1.5px; }
+  .cards { display: grid; gap: 10px; }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 14px; padding: 13px 14px; cursor: pointer; position: relative; transition: border-color 0.15s; }
+  .card-header { display: flex; gap: 10px; align-items: flex-start; padding-right: 28px; }
+  .num { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; margin-top: 2px; flex-shrink: 0; }
+  .bubble-row { display: flex; gap: 8px; align-items: flex-start; }
+  .bubble-row.right { flex-direction: row-reverse; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .msg-ko { font-size: 14px; color: #111; line-height: 1.5; margin-bottom: 2px; }
+  .hint { font-size: 11px; color: #bbb; margin-top: 3px; }
+  .translation-box { border-radius: 8px; padding: 7px 10px; margin-top: 6px; background: #f7f7f7; }
+  .bubble-row.right .translation-box { text-align: left; display: inline-block; max-width: 90%; }
+  .msg-en { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .note-text { font-size: 11px; color: #999; line-height: 1.5; }
+  .divider { border: none; border-top: 1px solid #f0f0f0; margin: 10px 0; }
+  .fav-star { position: absolute; top: 10px; right: 12px; background: none; border: none; cursor: pointer; font-size: 16px; color: #ddd; padding: 0; line-height: 1; }
+  .fav-star.on { color: #d4537e; }
+  .pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 16px; }
+  .pagination button { padding: 6px 14px; font-size: 13px; border-radius: 99px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+  .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pagination span { font-size: 13px; color: #888; }
+  .footer { font-size: 12px; color: #bbb; text-align: center; margin-top: 16px; }
+  .empty { text-align: center; color: #bbb; padding: 2rem 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const DATA = {
+  daily: {
+    label:"일상 대화", color:"#1D9E75", bg:"#E1F5EE", avatarBg:"#E1F5EE", avatarColor:"#1D9E75",
+    items:[
+      {kr:"잘 잤슈?",en:"Did you sleep well?",note:"'How did you sleep?' 도 OK",reply:{kr:"네, 잘 잤어요! 오빠는요?",en:"Yeah, I slept great! What about you?",note:"'Slept like a baby!' / 'Pretty good, thanks!'"}},
+      {kr:"출근 잘 했어?",en:"Did you get to work okay?",note:"'Did you make it in okay?' 도 자연스러움",reply:{kr:"넴~ 방금 도착했어요",en:"Yep! Just arrived.",note:"'Just got here!' / 'Made it in safely!'"}},
+      {kr:"오늘 뭐 먹나유?",en:"What are we having for dinner today?",note:"'What's for dinner?' 가 더 간결",reply:{kr:"삼겹살 어때요?",en:"How about samgyeopsal?",note:"'Pork belly sound good?' / 'Fancy grilling tonight?'"}},
+      {kr:"지금 갑니다요!",en:"I'm heading out now!",note:"'Leaving now!' / 'On my way out!'",reply:{kr:"조심히 가요~ 연락해요",en:"Take care! Text me when you're there.",note:"'Be safe!' / 'Let me know you arrived!'"}},
+      {kr:"조심히 와융",en:"Get home safe!",note:"'Drive safe!' / 'Take care on the way!'",reply:{kr:"응, 금방 갈게요",en:"Yep, I'll be right back.",note:"'On my way!' / 'Heading home now!'"}},
+      {kr:"오늘 당직이요",en:"I'm on night duty today.",note:"'I have night shift today.' 와 동일",reply:{kr:"고생해요 ㅠ 밥은 먹어요?",en:"Hang in there! Are you eating okay?",note:"'Take care of yourself!' / 'Make sure you eat!'"}},
+      {kr:"겨우 준비해서 나감",en:"Barely made it out the door.",note:"'I rushed out the door.' 도 자연스러움",reply:{kr:"그래도 잘 나갔네! 고생했어요",en:"But you made it! Good job.",note:"'You did it!' / 'Way to go!'"}},
+      {kr:"버스 탐요",en:"I'm on the bus.",note:"현재 상황이므로 'I'm on the bus' 가 맞음",reply:{kr:"몇 번 버스요?",en:"Which bus?",note:"'What bus number are you on?'"}},
+      {kr:"이제 나갑니다요",en:"I'm leaving now.",note:"'Heading out now.'",reply:{kr:"얍! 조심히 오세요",en:"Okay! Come home safe.",note:"'See you soon!' / 'Take care!'"}},
+      {kr:"곧 끝날 듯",en:"Should be done soon.",note:"'Almost done.' / 'Wrapping up soon.'",reply:{kr:"알겠어요, 기다릴게요",en:"Got it, I'll wait for you.",note:"'No rush!' / 'Take your time, I'll be here.'"}},
+      {kr:"날이 너무 포근해",en:"The weather is so mild today.",note:"포근하다 = mild / warm",reply:{kr:"정말요? 나가고 싶다",en:"Really? I wanna go out!",note:"'Let's go for a walk!' / 'Perfect weather to be outside!'"}},
+      {kr:"뭐 사다 줄까?",en:"Should I pick something up for you?",note:"'Want me to grab you something?'",reply:{kr:"괜찮아요! 그냥 와요",en:"I'm fine! Just come home.",note:"'Nothing needed, just come back!'"}},
+      {kr:"금방 갈께",en:"I'll be right there.",note:"'On my way!' / 'Be there in a sec!'",reply:{kr:"기다릴게요~",en:"I'll be waiting!",note:"'No rush!' / 'Take your time!'"}},
+      {kr:"오늘 좀 늦을 것 같아요",en:"Looks like I'll be a bit late again today.",note:"'Running a bit late again.'",reply:{kr:"알겠어요, 밥 먼저 먹을게요",en:"Got it, I'll go ahead and eat.",note:"'I'll eat first then.' / 'Don't worry, eat without me.'"}},
+      {kr:"먼저 식사 하세요",en:"Go ahead and eat without me.",note:"'Don't wait for me to eat.'",reply:{kr:"아니에요, 같이 먹어요!",en:"No way, let's eat together!",note:"'I'll wait for you!' / 'We'll eat when you get home.'"}},
+      {kr:"오늘 칼퇴했어",en:"I left right on time today.",note:"'Got off on time!' / 'No overtime today!'",reply:{kr:"오 신기해! 잘됐다",en:"Oh wow, that's rare! Good for you.",note:"'That never happens!' / 'Must be nice!'"}},
+      {kr:"연차 썼어요",en:"I took a day off.",note:"'I used one of my vacation days.'",reply:{kr:"오 좋겠다~ 뭐 할 거예요?",en:"Oh nice! What are you going to do?",note:"'Any plans?' / 'Lucky you!'"}},
+      {kr:"커피 한잔 할래요?",en:"Want to grab a coffee?",note:"'Coffee run?' / 'How about a coffee break?'",reply:{kr:"좋아요! 뭐 마실래요?",en:"Sure! What do you want?",note:"'What are you having?' / 'I'll have the usual.'"}},
+      {kr:"치킨 어때요?",en:"How about fried chicken?",note:"'Want fried chicken?' / 'Chicken sounds good?'",reply:{kr:"최고죠! 시켜요",en:"Yes! Let's order it.",note:"'Always a yes for chicken!' / 'Order away!'"}},
+      {kr:"삼겹살 구울게요",en:"I'll grill some samgyeopsal.",note:"'Grilling pork belly tonight!'",reply:{kr:"대박~ 상추도 준비할게요",en:"Awesome! I'll get the lettuce ready.",note:"'I'll prep the sides!' / 'I'll set up the table!'"}},
+      {kr:"주차 완료",en:"Parked!",note:"'Found a spot.' / 'Car is parked.'",reply:{kr:"오케이! 올라와요",en:"Okay! Come on up.",note:"'We're upstairs!' / 'Come in!'"}},
+      {kr:"날씨 진짜 좋다요",en:"The weather is just perfect today!",note:"'What beautiful weather!'",reply:{kr:"그러게요! 어디 가고 싶다",en:"Right?! I wanna go somewhere.",note:"'Let's go for a walk!' / 'Perfect day to go out!'"}},
+      {kr:"라면 하나 끓여봐",en:"How about making some ramen?",note:"'Let's make ramen.'",reply:{kr:"좋아요! 계란 넣을까요?",en:"Sure! Should I add an egg?",note:"'Egg on top?' / 'Adding an egg?'"}},
+      {kr:"만두 먹을까요?",en:"Shall we have dumplings?",note:"'Want some dumplings?'",reply:{kr:"좋아요~ 같이 만들까요?",en:"Sounds good! Want to make them together?",note:"'Let's cook from scratch!' / 'Homemade?'"}},
+      {kr:"차 막혀요",en:"There's traffic.",note:"'I'm stuck in traffic.' / 'Traffic is bad today.'",reply:{kr:"버스 타요! 더 빨라요",en:"Take the bus! It's faster.",note:"'Bus might be quicker!' / 'Skip the traffic!'"}},
+    ]
+  },
+  emotion: {
+    label:"감정·애정 표현", color:"#D4537E", bg:"#FBEAF0", avatarBg:"#E1F5EE", avatarColor:"#1D9E75",
+    items:[
+      {kr:"알라뷰 소머치 ❤️",en:"I love you so much!",note:"'Love you to the moon and back!'",reply:{kr:"나도요~ 사랑해요 💕",en:"Me too! Love you too! 💕",note:"'Love you more!' / 'Right back at you!'"}},
+      {kr:"고생했어유",en:"You worked so hard. Great job!",note:"'Thanks for all your hard work.'",reply:{kr:"괜찮아요~ 같이 있어서 힘났어요",en:"I'm okay! Having you made it bearable.",note:"'You make everything easier.' / 'Couldn't do it without you.'"}},
+      {kr:"힘내유",en:"Hang in there! You got this!",note:"'Keep going!' / 'Stay strong!'",reply:{kr:"고마워요 덕분에 힘나요 😊",en:"Thank you! That really helps.",note:"'You always know what to say!' / 'That means a lot!'"}},
+      {kr:"대단하네 Sophia이 👏",en:"That's amazing, Sophia!",note:"'I'm so proud of her!'",reply:{kr:"맞아요~ 우리 딸 최고야!",en:"I know right! Our girl is the best!",note:"'She never disappoints!' / 'So proud!'"}},
+      {kr:"귀엽네 ㅋㅋ",en:"That's so cute! Haha",note:"'Adorable!' / 'How cute is that!'",reply:{kr:"ㅋㅋ 그쵸? 완전 귀여워",en:"Haha right?? So adorable!",note:"'I can't even!' / 'Too cute for words!'"}},
+      {kr:"미안해",en:"I'm sorry.",note:"'I'm so sorry.' / 'My bad.'",reply:{kr:"괜찮아요~ 다음엔 잘 해요",en:"It's okay! Do better next time.",note:"'No worries!' / 'All good!'"}},
+      {kr:"고마워유 😊",en:"Thank you so much!",note:"'I really appreciate it.'",reply:{kr:"별말씀을~",en:"Don't mention it! Anytime.",note:"'No problem at all!' / 'Happy to help!'"}},
+      {kr:"스트레스 받았겠넹",en:"That must have been really stressful.",note:"'~했겠다' = 'must have been ~'",reply:{kr:"좀 그랬는데 이제 괜찮아요",en:"A bit, but I'm okay now.",note:"'Getting better.' / 'I'll be fine.'"}},
+      {kr:"속상하넹",en:"That's so frustrating.",note:"'That sucks.' / 'I'm sorry to hear that.'",reply:{kr:"그래도 잘 됐어요 결국",en:"But it all worked out in the end.",note:"'All good now!' / 'Things turned out okay.'"}},
+      {kr:"다행이다",en:"What a relief! / I'm so glad.",note:"'Glad it worked out.' / 'Phew!'",reply:{kr:"그러게요, 저도 안심했어요",en:"Right? I'm relieved too.",note:"'Big sigh of relief!' / 'So glad it's sorted.'"}},
+      {kr:"짱이다",en:"That's awesome! / This is the best!",note:"'So good!' / 'Absolutely amazing!'",reply:{kr:"그쵸? ㅎㅎ 최고야",en:"Right?? Haha, the best!",note:"'Couldn't agree more!' / 'Totally!'"}},
+      {kr:"못살겠뜨아",en:"You're killing me! (in a good way)",note:"'I can't handle this cuteness!'",reply:{kr:"ㅋㅋ 왜요~ 귀엽잖아요",en:"Haha why~~ Isn't it cute?",note:"'Too adorable, right?' / 'Admit it, you love it!'"}},
+      {kr:"개웃김 ㅋㅋ",en:"That's hilarious! Haha",note:"'I'm dying! 😂' / 'Too funny!'",reply:{kr:"그쵸ㅋㅋ 나도 웃겼어요",en:"Right?? I laughed so hard too.",note:"'Couldn't stop laughing!' / 'Dying over here!'"}},
+      {kr:"아쉽요",en:"That's a shame. / What a pity.",note:"'Too bad.' / 'Disappointing.'",reply:{kr:"괜찮아요~ 다음 기회에!",en:"It's okay! Next time!",note:"'There'll be another chance.' / 'Better luck next time!'"}},
+      {kr:"뭐가 그리 좋을꼬?",en:"Why are you so happy? What's got you smiling?",note:"'What are you so cheerful about?'",reply:{kr:"그냥요~ 오빠 생각나서요 ㅎ",en:"Just because~ I was thinking of you. Hehe",note:"'You make me happy!' / 'You're the reason!'"}},
+      {kr:"세상행복",en:"Happiest person alive right now!",note:"'I'm on cloud nine!' / 'Absolute bliss!'",reply:{kr:"왜요? 무슨 좋은 일 있어요?",en:"Why? What's the good news?",note:"'Tell me everything!' / 'Spill it!'"}},
+      {kr:"피곤하다",en:"I'm exhausted. / So tired.",note:"'I'm drained.' / 'Running on empty.'",reply:{kr:"얼른 와서 쉬어요",en:"Come home and rest soon.",note:"'I'll have the bed ready!' / 'Just relax when you're home.'"}},
+      {kr:"걱정 마유",en:"Don't worry about it.",note:"'No worries!' / 'It's totally fine.'",reply:{kr:"알겠어요~ 고마워요",en:"Okay~ Thank you!",note:"'Thanks for saying that.' / 'You always make me feel better!'"}},
+      {kr:"잘했어유 👏",en:"Well done! / Good job!",note:"'Nice work!' / 'You nailed it!'",reply:{kr:"고마워요~ 열심히 했어요",en:"Thank you! I worked really hard.",note:"'It paid off!' / 'All that effort was worth it!'"}},
+      {kr:"자랑스럽다 💯",en:"I'm so proud!",note:"'So proud of you!'",reply:{kr:"저도 오빠가 자랑스러워요!",en:"I'm proud of you too!",note:"'We're proud of each other!'"}},
+      {kr:"사랑 폭탄 💣",en:"Sending you all my love! 💕",note:"'Love bombing you!'",reply:{kr:"나도! 💕💕💕",en:"Same! 💕💕💕",note:"'Love you right back!'"}},
+      {kr:"잘 자유",en:"Good night! Sleep well!",note:"'Sweet dreams!' / 'Rest well!'",reply:{kr:"굿나잇~ 꿈에서 봐요 💤",en:"Good night! See you in my dreams 💤",note:"'Sweet dreams!' / 'Talk tomorrow!'"}},
+      {kr:"무리하지 마요",en:"Don't push yourself too hard.",note:"'Take it easy.' / 'Don't overdo it.'",reply:{kr:"알겠어요~ 걱정해줘서 고마워요",en:"I know~ Thanks for caring.",note:"'You're always looking out for me.'"}},
+      {kr:"헐, 대박",en:"Oh wow, that's amazing!",note:"'No way!' / 'That's unbelievable!'",reply:{kr:"그쵸?? 진짜 대박이죠",en:"Right?? It's absolutely wild!",note:"'Couldn't believe it either!' / 'Insane, right?'"}},
+      {kr:"보고 싶어",en:"I miss you.",note:"'Been thinking about you.' / 'Can't wait to see you.'",reply:{kr:"나도요~ 빨리 와요 ❤️",en:"Me too~ Hurry home! ❤️",note:"'Come home soon!' / 'Missing you too!'"}},
+    ]
+  },
+  stocks: {
+    label:"주식·재테크", color:"#185FA5", bg:"#E6F1FB", avatarBg:"#E1F5EE", avatarColor:"#1D9E75",
+    items:[
+      {kr:"슬라 좀 올랐닝",en:"Tesla went up a bit.",note:"'TSLA is up.' / 'Tesla gained ground.'",reply:{kr:"오 얼마나요?",en:"Oh, by how much?",note:"'What's it at now?' / 'How much did it gain?'"}},
+      {kr:"팔란티어 22프로 구나",en:"Palantir is up 22%!",note:"'PLTR jumped 22%!'",reply:{kr:"헐 대박! 더 살걸 그랬다",en:"Wow, crazy! I should've bought more.",note:"'Should've loaded up!' / 'Missed opportunity!'"}},
+      {kr:"믿음이 약했네. 아쉽",en:"I should've had more faith. What a shame.",note:"'Should've held longer.'",reply:{kr:"그러게요 ㅠ 다음엔 버텨요",en:"I know 😢 Let's hold on longer next time.",note:"'Stay patient next time.' / 'Lesson learned!'"}},
+      {kr:"잃지 않았으면 된거야",en:"As long as we didn't lose anything, we're fine.",note:"'Break even is still a win.'",reply:{kr:"맞아요! 그래도 다행이에요",en:"True! Still a relief.",note:"'No loss is still good!' / 'We'll do better next time.'"}},
+      {kr:"코인이 개뺘짐",en:"Crypto tanked hard.",note:"'Crypto crashed.' / 'The market dumped.'",reply:{kr:"언제 다시 올라요 ㅠ",en:"When will it recover?? 😢",note:"'When's the rebound?' / 'How long until it goes back up?'"}},
+      {kr:"버티자 ㅋ",en:"Let's hold on! Haha",note:"'Stay the course!' / 'Just hodl!'",reply:{kr:"그래요 ㅋㅋ 버텨봅시다!",en:"Haha yeah, let's hold steady!",note:"'We got this!' / 'Ride it out!'"}},
+      {kr:"가즈아!",en:"Let's go! / To the moon!",note:"한국 투자 커뮤니티 표현. 영어권은 'To the moon!'",reply:{kr:"가즈아!!!!! 🚀🚀",en:"Let's gooo!!!! 🚀🚀",note:"'Sending it!' / 'Up only!'"}},
+      {kr:"계좌 수익 다시 5 진입",en:"My account profit is back to 5 million.",note:"'Back in the green.' / 'Back to 5M.'",reply:{kr:"오 잘됐다! 이제 더 가자",en:"Oh nice! Now let's push higher!",note:"'Keep it going!' / 'Don't stop here!'"}},
+      {kr:"환전 다 해놔",en:"Get the currency exchange done.",note:"'Convert the money.' / 'Exchange to USD.'",reply:{kr:"알겠어요~ 얼마 할까요?",en:"Got it! How much should I convert?",note:"'What amount?' / 'All of it?'"}},
+      {kr:"저점 찍고 오르는 중",en:"It hit the bottom and is climbing back up.",note:"'It bounced off the low.' / 'Recovering from the dip.'",reply:{kr:"오 이제 살 타이밍이네요!",en:"Oh, maybe time to buy!",note:"'Good entry point!' / 'Now or never!'"}},
+      {kr:"손절각이다",en:"Time to cut my losses.",note:"'I need to stop the bleeding.'",reply:{kr:"맞아요, 더 빠지기 전에요",en:"Right, before it drops more.",note:"'Don't let it get worse.' / 'Exit now.'"}},
+      {kr:"수익 실현했어",en:"I took profits.",note:"'Cashed out my gains.' / 'Locked in profits.'",reply:{kr:"잘했어요! 얼마 벌었어요?",en:"Nice job! How much did you make?",note:"'What were the gains?' / 'How much profit?'"}},
+      {kr:"양전이다!",en:"I'm in the green! / Back to profit!",note:"'Finally profitable!' / 'Back in the black!'",reply:{kr:"야호!! 이제 더 가자 🚀",en:"Yay!! Now let's go higher! 🚀",note:"'Keep climbing!' / 'Don't stop now!'"}},
+      {kr:"마이너스다 ㅠ",en:"I'm in the red. 😢",note:"'Down on this one.' / 'Currently at a loss.'",reply:{kr:"괜찮아요, 기다리면 올라와요",en:"It's okay, just hold and it'll come back.",note:"'Be patient.' / 'It'll recover, just wait.'"}},
+      {kr:"수익률이 30%야",en:"I'm up 30%.",note:"'30% return so far.'",reply:{kr:"대박!! 언제 팔 거예요?",en:"Incredible!! When are you going to sell?",note:"'Taking profits soon?' / 'Target price?'"}},
+      {kr:"달리는 말에 올라타자",en:"Let's ride the momentum!",note:"'Jump on the trend!' / 'Don't miss the rally!'",reply:{kr:"좋아요! 지금 들어갈게요",en:"Let's do it! I'm buying now.",note:"'Jumping in!' / 'Getting in now!'"}},
+      {kr:"비트 8천만 찍으면 팔자",en:"Let's sell Bitcoin when it hits 80 million won.",note:"'Set a sell target at 80M.'",reply:{kr:"동의! 미리 걸어둘게요",en:"Agreed! I'll set the order in advance.",note:"'Setting the limit order now.'"}},
+      {kr:"코인 오른다",en:"Crypto is climbing.",note:"'Crypto is up.' / 'Digital assets are rallying.'",reply:{kr:"오 진짜요? 얼마나요?",en:"Oh really? By how much?",note:"'What's the gain?' / 'How much up?'"}},
+      {kr:"포트폴리오 정리해야겠어",en:"I need to clean up my portfolio.",note:"'Time to rebalance.'",reply:{kr:"뭐 팔 거예요?",en:"What are you thinking of selling?",note:"'Which positions are you cutting?'"}},
+      {kr:"오늘 시장 분위기 어때?",en:"How's the market feeling today?",note:"'What's the market sentiment?'",reply:{kr:"오늘은 전반적으로 좋아요",en:"Overall pretty good today.",note:"'Markets are up across the board.' / 'Green day!'"}},
+      {kr:"배당금 얼마야?",en:"How much is the dividend?",note:"'What's the dividend yield?'",reply:{kr:"분기당 꽤 나오더라고요",en:"It pays out quite a bit each quarter.",note:"'Solid quarterly payout.' / 'Good yield on that one.'"}},
+      {kr:"물타기 해야 하나",en:"Should I average down?",note:"'Should I buy more at this price?'",reply:{kr:"저도 고민이에요. 조금만 더 기다려요",en:"Same here. Let's wait a little longer.",note:"'Hold off a bit.' / 'Not yet, let's see.'"}},
+      {kr:"예약 주문 걸어뒀어",en:"I placed a limit order.",note:"'Set a buy order at that price.'",reply:{kr:"얼마에 걸었어요?",en:"What price did you set it at?",note:"'What's your target entry?' / 'What level?'"}},
+      {kr:"이거 진짜 오를 것 같아",en:"I really think this one's going to go up.",note:"'This looks bullish.'",reply:{kr:"그래요? 얼마나 담을까요?",en:"Yeah? How much should we buy?",note:"'How many shares?' / 'What position size?'"}},
+      {kr:"분할로 살까?",en:"Should we buy in stages?",note:"'Dollar-cost averaging?' / 'Buy in gradually?'",reply:{kr:"그게 안전하죠~ 조금씩 사요",en:"Safer that way~ Let's buy a little at a time.",note:"'DCA is smart.' / 'Gradual entry is the way.'"}},
+    ]
+  },
+  family: {
+    label:"육아·학교", color:"#BA7517", bg:"#FAEEDA", avatarBg:"#E1F5EE", avatarColor:"#1D9E75",
+    items:[
+      {kr:"Sophia이 잘 갔어?",en:"Did Sophia get there okay?",note:"'Did she make it safely?'",reply:{kr:"네, 등원알림 왔어요 ㅎ",en:"Yep, got the check-in notification!",note:"'She made it!' / 'Safe and sound.'"}},
+      {kr:"겨우겨우겨우 일어남 ㅠ",en:"She barely woke up. Such a struggle!",note:"'Getting her out of bed was a battle.'",reply:{kr:"ㅋㅋ 그래도 나갔잖아요!",en:"Haha but she made it out!",note:"'She got there in the end!' / 'That's what matters!'"}},
+      {kr:"화 안내고 평화롭게 감",en:"She left without any fuss — peacefully!",note:"'No complaints this morning!'",reply:{kr:"오 오늘은 기적이네요 ㅎㅎ",en:"Oh, that's a miracle today! Haha",note:"'That never happens!' / 'What a morning!'"}},
+      {kr:"수학 등록했어요",en:"I signed Sophia up for math class.",note:"'Enrolled her in math.'",reply:{kr:"잘했어요! 언제부터 시작해요?",en:"Good call! When does it start?",note:"'When's the first class?' / 'Starting soon?'"}},
+      {kr:"수학 테스트 하러 왔어요",en:"We came for the math placement test!",note:"'Here for the math assessment.'",reply:{kr:"오 어떻게 됐어요?",en:"Oh, how did it go?",note:"'How'd she do?' / 'What was the result?'"}},
+      {kr:"오 특급칭찬이네",en:"Wow, that's high praise!",note:"'She got a glowing review!'",reply:{kr:"역시 우리 딸 ㅎㅎ 대단해",en:"That's our girl!! So proud.",note:"'She never disappoints.' / 'As expected from her!'"}},
+      {kr:"물 들어올때 저을 수 있게",en:"Strike while the iron is hot!",note:"영어 속담으로 완벽히 대응하는 표현",reply:{kr:"맞아요! 지금이 기회예요",en:"Exactly! Now's our chance.",note:"'Seize the moment!' / 'Let's go for it!'"}},
+      {kr:"챕터북을 뚝딱 읽기 시작해서",en:"She's started breezing through chapter books.",note:"'Flying through chapter books.'",reply:{kr:"대박! 얼마 만에요?",en:"Wow! How quickly?",note:"'How fast is she finishing them?' / 'That's incredible!'"}},
+      {kr:"딱 Sophia이 수준보다 살짝 높아요",en:"It's just slightly above Sophia's level — perfect.",note:"'A good stretch for her.'",reply:{kr:"딱 좋네요! 적당히 어려워야죠",en:"Perfect! A little challenge is good.",note:"'Not too easy, not too hard.' / 'Just right!'"}},
+      {kr:"생일 축하해 Sophia 🎉",en:"Happy birthday, Sophia!",note:"'Wishing you the best birthday!'",reply:{kr:"감사합니다!! 케이크 먹을거에요🎂",en:"Thank you!! We're having cake! 🎂",note:"'Celebrate big!' / 'Make it special!'"}},
+      {kr:"Sophia이 많이 컸넹",en:"Sophia has grown so much.",note:"'She's gotten so big!'",reply:{kr:"그쵸? 시간 진짜 빠르다",en:"Right? Time flies so fast.",note:"'She's growing up too fast!' / 'Where did the time go?'"}},
+      {kr:"유치원 잘 다녀와",en:"Have a great day at kindergarten!",note:"'Enjoy school!' / 'Have fun today!'",reply:{kr:"다녀올게요~! 🏃‍♀️",en:"I'm off! See you later~! 🏃‍♀️",note:"'Bye bye!' / 'See you after school!'"}},
+      {kr:"독감 맞으러 왔어요",en:"We came to get the flu shot.",note:"'Here for the flu vaccine.'",reply:{kr:"잘했어! 아프진 않았어?",en:"Good job! Did it hurt?",note:"'Was she brave?' / 'How did she handle it?'"}},
+      {kr:"세상씩씩하게 맞았어요",en:"She was incredibly brave and got it done!",note:"'So brave!' / 'Tough as nails!'",reply:{kr:"역시 우리 Sophia이!! 대단해",en:"That's our Sophia!! So amazing.",note:"'She's fearless!' / 'So proud of her!'"}},
+      {kr:"독감 아니래요!",en:"It's not the flu!",note:"'Negative for the flu — what a relief!'",reply:{kr:"다행이다~ 진짜 다행이야",en:"What a relief~ So glad!",note:"'Thank goodness!' / 'Phew, that's great news!'"}},
+      {kr:"열 안 떨어져요 ㅠ",en:"Her fever won't go down. 😢",note:"'The fever is persisting.'",reply:{kr:"병원 가봐야 할 것 같아요",en:"We should probably go to the clinic.",note:"'Better get it checked out.' / 'Time to see a doctor.'"}},
+      {kr:"태권도 오늘 끝났어요",en:"Taekwondo is done for today.",note:"'Taekwondo class finished.'",reply:{kr:"수고했어요! 잘 했어요?",en:"Good work! How did she do?",note:"'Was she focused today?' / 'Any progress?'"}},
+      {kr:"띠 바뀌었어! 승급했어!",en:"She got promoted! New belt!",note:"'New belt achieved!' / 'She leveled up!'",reply:{kr:"대박!! 축하해요 🥋🎉",en:"Amazing!! Congratulations!! 🥋🎉",note:"'So proud!' / 'What an achievement!'"}},
+      {kr:"화상영어 있어요 7시에",en:"Online English class at 7.",note:"'Video English lesson at 7 PM.'",reply:{kr:"알겠어요~ 방해 안 할게요",en:"Got it~ I won't interrupt.",note:"'She needs to focus.' / 'I'll be quiet.'"}},
+      {kr:"6.4 나왔네요!",en:"She scored 6.4!",note:"AR 6.4 = 미국 6학년 4개월 수준",reply:{kr:"헐 대박!! 진짜 잘한다",en:"Wow, incredible!! She's so talented!",note:"'That's outstanding!' / 'What a reader!'"}},
+      {kr:"수학 선생님이 칭찬해 주셨어요",en:"The math teacher praised her.",note:"'Her math teacher gave great feedback!'",reply:{kr:"역시!! 열심히 한 보람이 있네요",en:"Of course!! All that hard work paid off.",note:"'Hard work pays off!' / 'She deserves it!'"}},
+      {kr:"소고기 구워달래요",en:"She's asking for grilled beef.",note:"'She wants Korean BBQ beef.'",reply:{kr:"ㅋㅋ 알겠어요, 오늘은 특식이다",en:"Haha okay, special meal today!",note:"'Treat day!' / 'She gets what she wants!'"}},
+      {kr:"두 그릇 뚝딱 먹음",en:"She polished off two bowls!",note:"'Cleaned two bowls!' / 'Two servings!'",reply:{kr:"ㅋㅋㅋ 잘 먹어서 다행이야",en:"Hahaha glad she has a healthy appetite!",note:"'Growing girl!' / 'She's fueling up!'"}},
+      {kr:"잠이 안온대요",en:"She says she can't fall asleep.",note:"'She's having trouble sleeping.'",reply:{kr:"낮잠 자서 그런가요?",en:"Maybe because she napped earlier?",note:"'Nap too close to bedtime?' / 'Overtired?'"}},
+      {kr:"책 반납했어요",en:"I returned the books.",note:"'Books are returned.' / 'Library books dropped off.'",reply:{kr:"감사해요! 새로 빌렸어요?",en:"Thanks! Did you borrow new ones?",note:"'Grab any new ones?' / 'New books coming home?'"}},
+    ]
+  }
+};
+
+const TABS = [
+  {key:"daily", icon:"☀"},
+  {key:"emotion", icon:"♥"},
+  {key:"stocks", icon:"↑"},
+  {key:"family", icon:"★"},
+];
+const PER_PAGE = 15;
+
+let state = {
+  tab: "daily",
+  flipped: {},
+  favs: {},
+  search: "",
+  page: 0,
+  showFavOnly: false,
+};
+
+function $(id){ return document.getElementById(id); }
+
+function render(){
+  const cat = DATA[state.tab];
+  const q = state.search.trim().toLowerCase();
+  const filtered = cat.items.filter((item, i) => {
+    const key = state.tab + "-" + i;
+    if(state.showFavOnly && !state.favs[key]) return false;
+    if(!q) return true;
+    return item.kr.includes(q) || item.en.toLowerCase().includes(q) || item.note.toLowerCase().includes(q);
+  });
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  if(state.page >= totalPages && totalPages > 0) state.page = 0;
+  const pageItems = filtered.slice(state.page * PER_PAGE, (state.page+1) * PER_PAGE);
+  const favCount = Object.values(state.favs).filter(Boolean).length;
+  const total = Object.values(DATA).reduce((s,c) => s+c.items.length, 0);
+
+  let html = `
+    <h1>Jason & Emma's Real Life English <span class="badge">${total} expressions</span></h1>
+    <p class="subtitle">실제 대화에서 뽑은 표현 · 카드를 눌러 영어 번역 + 응답 확인</p>
+    <div class="tabs">
+  `;
+  TABS.forEach(t => {
+    const c = DATA[t.key];
+    const active = state.tab === t.key;
+    html += `<button class="tab${active?" active":""}" onclick="switchTab('${t.key}')" style="${active?`background:${c.bg};color:${c.color};border-color:${c.color};`:""}">${t.icon} ${c.label} <span style="opacity:.6;font-size:11px">(${c.items.length})</span></button>`;
+  });
+  html += `</div>
+    <div class="controls">
+      <input id="search-input" type="text" placeholder="한국어 또는 영어로 검색..." value="${state.search.replace(/"/g,'&quot;')}" oninput="onSearch(this.value)">
+      <button class="fav-btn-bar${state.showFavOnly?" active":""}" onclick="toggleFavFilter()">♥ ${favCount>0?"즐겨찾기 ("+favCount+")":"즐겨찾기"}</button>
+    </div>
+  `;
+
+  if(filtered.length === 0){
+    html += `<div class="empty">검색 결과가 없어요.</div>`;
+  } else {
+    html += `<div class="cards">`;
+    pageItems.forEach(item => {
+      const origIdx = cat.items.indexOf(item);
+      const key = state.tab + "-" + origIdx;
+      const isFlipped = !!state.flipped[key];
+      const isFav = !!state.favs[key];
+      html += `
+        <div class="card" onclick="toggleCard('${key}')" style="border-color:${isFlipped?cat.color:"#e5e5e5"}">
+          <button class="fav-star${isFav?" on":""}" onclick="toggleFav(event,'${key}')">♥</button>
+          <div class="card-header">
+            <span class="num" style="background:${cat.bg};color:${cat.color}">${origIdx+1}</span>
+            <div style="flex:1">
+              <div class="bubble-row">
+                <div class="avatar" style="background:${cat.bg};color:${cat.color}">J</div>
+                <div>
+                  <div class="msg-ko">${item.kr}</div>
+                  ${!isFlipped?`<div class="hint">눌러서 영어 표현 + 응답 보기 →</div>`:""}
+                </div>
+              </div>
+              ${isFlipped?`
+                <div class="translation-box" style="margin-left:36px;margin-top:6px">
+                  <div class="msg-en" style="color:${cat.color}">${item.en}</div>
+                  <div class="note-text">${item.note}</div>
+                </div>
+                <hr class="divider">
+                <div class="bubble-row right">
+                  <div class="avatar" style="background:#FBEAF0;color:#D4537E">E</div>
+                  <div style="text-align:right">
+                    <div class="msg-ko">${item.reply.kr}</div>
+                    <div class="translation-box" style="margin-top:4px">
+                      <div class="msg-en" style="color:#D4537E">${item.reply.en}</div>
+                      <div class="note-text">${item.reply.note}</div>
+                    </div>
+                  </div>
+                </div>
+              `:""}
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+
+  if(totalPages > 1){
+    html += `
+      <div class="pagination">
+        <button onclick="changePage(-1)" ${state.page===0?"disabled":""}>← 이전</button>
+        <span>${state.page+1} / ${totalPages} (${filtered.length}개)</span>
+        <button onclick="changePage(1)" ${state.page===totalPages-1?"disabled":""}>다음 →</button>
+      </div>
+    `;
+  }
+  html += `<div class="footer">${total}개 표현 · Jason & Emma 실제 대화에서 선별</div>`;
+  $("app").innerHTML = html;
+}
+
+function switchTab(key){ state.tab=key; state.flipped={}; state.page=0; state.search=""; state.showFavOnly=false; render(); }
+function toggleCard(key){ state.flipped[key]=!state.flipped[key]; render(); }
+function toggleFav(e,key){ e.stopPropagation(); state.favs[key]=!state.favs[key]; render(); }
+function toggleFavFilter(){ state.showFavOnly=!state.showFavOnly; state.page=0; render(); }
+function onSearch(v){ state.search=v; state.page=0; render(); }
+function changePage(d){ state.page+=d; render(); }
+
+render();
+</script>
+</body>
+</html>
